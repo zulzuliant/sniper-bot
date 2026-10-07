@@ -1,0 +1,24 @@
+{
+  "dryRun": true,
+  "mode": "auto",
+  "customBid": 0,
+  "increment": 0,
+  "stepsAbove": 1,
+  "maxBid": 0,
+
+  "fireBeforeMs": 2500,
+  "refreshBeforeMs": 4000,
+  "pollMs": 15000,
+  "requestTimeoutMs": 8000,
+  "timezone": "+07:00",
+
+  "stateUrl": "",
+  "pricePath": "",
+  "endTimePath": "",
+  "serverTimePath": "",
+
+  "bidUrl": "",
+  "bidMethod": "POST",
+  "bidBody": "{\"nilai\":{{amount}}}",
+  "extraHeaders": {}
+}

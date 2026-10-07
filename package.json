@@ -1,0 +1,16 @@
+{
+  "name": "sniper-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sniper bot untuk bid di detik akhir lelang",
+  "main": "src/core.js",
+  "scripts": {
+    "start": "node src/cli.js",
+    "test:koneksi": "node src/cli.js --test",
+    "test": "node test/selftest.js",
+    "ui": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

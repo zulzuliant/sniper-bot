@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sniper lelang</title>
+<style>
+:root{--bg:#eef1f4;--card:#fff;--ink:#18232e;--mut:#5b6874;--line:#d3d9e0;--go:#0e6b5b;--stop:#b3261e;--warn:#8a5a00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px;display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:0 0 10px}
+.sub{color:var(--mut);margin:0 0 16px}
+section,aside{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+aside{position:sticky;top:16px;margin:0}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;color:var(--ink);background:#fff}
+textarea{min-height:64px;font:13px Consolas,monospace}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--go);outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:12px;color:var(--mut);margin:3px 0 0}
+button{font:inherit;padding:9px 14px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.go{background:var(--go);border-color:var(--go);color:#fff}button.stop{background:var(--stop);border-color:var(--stop);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+details{margin-top:12px}summary{cursor:pointer;color:var(--mut)}
+.imp{background:#f6f8fa;border:1px dashed var(--line);border-radius:8px;padding:10px;margin-bottom:12px}
+.imp textarea{min-height:48px}
+.mode{display:flex;gap:16px;margin:4px 0}.mode label{display:flex;gap:6px;align-items:center;margin:0;color:var(--ink);font-size:15px}.mode input{width:auto}
+.dry{display:flex;gap:8px;align-items:center;padding:10px;border-radius:8px;background:#eef7f4;border:1px solid #bfe0d6;margin:0 0 12px}.dry input{width:auto}.dry label{margin:0;color:var(--ink);font-size:14px}
+#chip{display:inline-block;padding:2px 10px;border-radius:99px;background:#e6eaee;font-size:13px;margin-bottom:10px}
+#chip.run{background:#d9efe9;color:var(--go)}#chip.bad{background:#f8dcd9;color:var(--stop)}
+.big{font:600 40px/1.1 Consolas,"Cascadia Mono",monospace;font-variant-numeric:tabular-nums;margin:2px 0 8px}
+.lbl{font-size:12px;color:var(--mut)}.mid{font:500 18px Consolas,monospace;margin-bottom:8px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#log{background:#121a22;color:#cfe3ee;border-radius:8px;padding:10px;height:220px;overflow:auto;font:12px/1.5 Consolas,monospace;white-space:pre-wrap;margin:0}
+.pr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}.pr code{font:12px Consolas,monospace}
+.pr .v{color:var(--mut);flex:1;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pr button{padding:3px 8px;font-size:12px}
+button.sug{border-color:var(--go);color:var(--go)}#paths{max-height:260px;overflow:auto;margin-top:8px}.msg.warn{color:var(--warn)}
+.msg{font-size:13px;margin-top:8px;white-space:pre-wrap}.msg.err{color:var(--stop)}.msg.ok{color:var(--go)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<main>
+<h1>Sniper lelang</h1>
+<p class="sub">Isi data dari DevTools, tes koneksi, lalu mulai. Mode uji aktif secara default dan tidak mengirim bid.</p>
+
+<section>
+<h2>1. Data lot</h2>
+<div class="imp"><label for="curlState" style="margin-top:0">Tempel cURL request harga lot (DevTools: klik kanan request, Copy as cURL)</label>
+<textarea id="curlState" placeholder="curl 'https://...'"></textarea>
+<button type="button" id="impState" style="margin-top:6px">Isi otomatis dari cURL</button><div class="msg" id="mState"></div></div>
+<label for="stateUrl">stateUrl</label><input id="stateUrl" placeholder="https://...">
+<div class="row"><div><label for="pricePath">pricePath</label><input id="pricePath" placeholder="data.harga_tertinggi"></div>
+<div><label for="endTimePath">endTimePath</label><input id="endTimePath" placeholder="data.waktu_selesai"></div></div>
+<p class="hint">Path = urutan nama field di JSON, dipisah titik. Untuk daftar, pakai angka: <code>items.0.harga</code></p>
+<button type="button" id="bInspect" style="margin-top:8px">Lihat isi respons dan pilih path</button><div class="msg" id="mPaths"></div><div id="paths"></div>
+</section>
+
+<section>
+<h2>2. Kirim bid</h2>
+<div class="imp"><label for="curlBid" style="margin-top:0">Tempel cURL request saat klik tombol tawar</label>
+<textarea id="curlBid" placeholder="curl 'https://...' --data-raw '...'"></textarea>
+<label for="sample">Nominal yang Anda tawar saat merekam (opsional, akan diganti {{amount}})</label><input id="sample" placeholder="1050000">
+<button type="button" id="impBid" style="margin-top:6px">Isi otomatis dari cURL</button><div class="msg" id="mBid"></div></div>
+<div class="row"><div><label for="bidUrl">bidUrl</label><input id="bidUrl" placeholder="https://..."></div>
+<div><label for="bidMethod">Metode</label><select id="bidMethod"><option>POST</option><option>PUT</option><option>PATCH</option><option>GET</option></select></div></div>
+<label for="bidBody">bidBody (harus memuat {{amount}})</label><textarea id="bidBody">{"nilai":{{amount}}}</textarea>
+<label for="cookie">Cookie sesi (tidak disimpan di browser)</label><input id="cookie" type="password" autocomplete="off">
+</section>
+
+<section>
+<h2>3. Strategi</h2>
+<div class="mode"><label><input type="radio" name="mode" value="auto" checked>Auto (harga terakhir + kelipatan)</label><label><input type="radio" name="mode" value="custom">Custom (nominal tetap)</label></div>
+<div class="row"><div id="gInc"><label for="increment">increment (kelipatan)</label><input id="increment" inputmode="numeric" placeholder="50.000"></div>
+<div id="gCus" hidden><label for="customBid">customBid</label><input id="customBid" inputmode="numeric"></div>
+<div><label for="maxBid">maxBid (batas tertinggi)</label><input id="maxBid" inputmode="numeric" placeholder="2.000.000"></div></div>
+<details><summary>Pengaturan lanjutan</summary>
+<div class="row"><div><label for="stepsAbove">stepsAbove (naik berapa kelipatan)</label><input id="stepsAbove" value="1"></div>
+<div><label for="fireBeforeMs">Tembak berapa ms sebelum tutup</label><input id="fireBeforeMs" value="2500"></div>
+<div><label for="refreshBeforeMs">Refresh harga berapa ms sebelum tembak</label><input id="refreshBeforeMs" value="4000"></div>
+<div><label for="timezone">Zona waktu server</label><input id="timezone" value="+07:00"></div></div>
+<label for="serverTimePath">serverTimePath (opsional, jam server dari API)</label><input id="serverTimePath">
+<label for="extraHeaders">Header tambahan (JSON, terisi otomatis dari cURL)</label><textarea id="extraHeaders">{}</textarea></details>
+</section>
+</main>
+
+<aside>
+<span id="chip">Siap</span>
+<div class="lbl">Tembak dalam</div><div class="big" id="tFire">--:--.-</div>
+<div class="lbl">Lelang tutup dalam</div><div class="mid" id="tEnd">--:--.-</div>
+<div class="lbl">Harga terakhir</div><div class="mid" id="price">-</div>
+<div class="dry"><input type="checkbox" id="dryRun" checked><label for="dryRun">Mode uji: jangan kirim bid</label></div>
+<div class="btns"><button id="bTest" type="button">Tes koneksi</button><button id="bStart" class="go" type="button">Mulai</button><button id="bStop" class="stop" type="button" disabled>Berhenti</button></div>
+<div class="msg" id="mMain"></div><div class="msg warn" id="mWarn"></div>
+<pre id="log" aria-live="polite"></pre>
+</aside>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const F=['stateUrl','pricePath','endTimePath','serverTimePath','timezone','bidUrl','bidMethod','bidBody','extraHeaders','increment','stepsAbove','customBid','maxBid','fireBeforeMs','refreshBeforeMs'];
+const rp=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
+const fmt=ms=>{if(ms==null||isNaN(ms))return'--:--.-';ms=Math.max(0,ms);const m=Math.floor(ms/60000),s=(ms%60000)/1000;return String(m).padStart(2,'0')+':'+s.toFixed(1).padStart(4,'0')};
+const say=(id,t,cls)=>{$(id).textContent=t;$(id).className='msg'+(cls?' '+cls:'')};
+let fireAt=null,endAt=null,running=false;
+
+function gather(){const c={};for(const k of F)c[k]=$(k).value;c.cookie=$('cookie').value;
+c.mode=document.querySelector('input[name=mode]:checked').value;c.dryRun=$('dryRun').checked;
+try{c.extraHeaders=c.extraHeaders.trim()?JSON.parse(c.extraHeaders):{}}catch{throw new Error('Header tambahan harus berupa JSON yang valid')}return c}
+
+async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});const j=await r.json();
+if(!r.ok)throw new Error(j.errors?j.errors.join('\n'):j.error||'Gagal');return j}
+
+function save(){const o={};for(const k of F)o[k]=$(k).value;o.mode=document.querySelector('input[name=mode]:checked').value;try{localStorage.setItem('sniper-form',JSON.stringify(o))}catch{}}
+function load(){try{const o=JSON.parse(localStorage.getItem('sniper-form')||'{}');for(const k of F)if(o[k]!=null)$(k).value=o[k];if(o.mode)document.querySelector(`input[name=mode][value=${o.mode}]`).checked=true}catch{}}
+function modeUI(){const a=document.querySelector('input[name=mode]:checked').value==='auto';$('gInc').hidden=!a;$('gCus').hidden=a}
+
+function tokenize(s){const t=[];let i=0;const n=s.length;
+while(i<n){while(i<n&&/\s/.test(s[i]))i++;if(i>=n)break;let cur='';
+while(i<n&&!/\s/.test(s[i])){const c=s[i];
+if(c==="'"){i++;while(i<n&&s[i]!=="'")cur+=s[i++];i++}
+else if(c==='$'&&s[i+1]==="'"){i+=2;while(i<n&&s[i]!=="'"){if(s[i]==='\\'){const d=s[++i];cur+=d==='n'?'\n':d==='r'?'\r':d==='t'?'\t':d;i++}else cur+=s[i++]}i++}
+else if(c==='"'){i++;while(i<n&&s[i]!=='"'){if(s[i]==='\\'&&'"\\$`'.includes(s[i+1]||'')){cur+=s[i+1];i+=2}else cur+=s[i++]}i++}
+else{cur+=c;i++}}
+t.push(cur)}return t}
+
+function parseCurl(raw){let s=raw.replace(/\^\r?\n/g,' ').replace(/\\\r?\n/g,' ');if(/\^"/.test(s))s=s.replace(/\^([\s\S])/g,'$1');
+const t=tokenize(s.trim()),o={headers:{},cookie:'',body:'',method:'',url:''};
+for(let i=0;i<t.length;i++){const a=t[i],v=t[i+1]||'';
+if(/^https?:\/\//.test(a))o.url=a;
+else if(a==='-H'||a==='--header'){i++;const k=v.indexOf(':');if(k>0){const n=v.slice(0,k).trim(),x=v.slice(k+1).trim(),l=n.toLowerCase();
+if(l==='cookie')o.cookie=x;else if(!/^(host|content-length|accept-encoding|connection|priority)$|^sec-|^:/.test(l))o.headers[n]=x}}
+else if(a==='-b'||a==='--cookie'){i++;o.cookie=v}
+else if(/^(--data(-raw|-binary|-urlencode)?|-d)$/.test(a)){i++;o.body=v}
+else if(a==='-X'||a==='--request'){i++;o.method=v.toUpperCase()}}
+if(!o.url)throw new Error('URL tidak ditemukan di perintah cURL');
+if(!o.method)o.method=o.body?'POST':'GET';return o}
+
+function mergeHeaders(h,cookie){let cur={};try{cur=JSON.parse($('extraHeaders').value||'{}')}catch{}
+$('extraHeaders').value=JSON.stringify({...cur,...h},null,1);if(cookie)$('cookie').value=cookie}
+
+$('impState').onclick=()=>{try{const o=parseCurl($('curlState').value);$('stateUrl').value=o.url;mergeHeaders(o.headers,o.cookie);save();
+say('mState',o.method!=='GET'?'Terisi, tapi request ini '+o.method+'. Versi sekarang hanya mendukung GET untuk data lot.':'Terisi: URL, cookie, dan header. Isi pricePath dan endTimePath dari respons JSON-nya.',o.method!=='GET'?'err':'ok')}catch(e){say('mState',e.message,'err')}};
+$('impBid').onclick=()=>{try{const o=parseCurl($('curlBid').value);$('bidUrl').value=o.url;$('bidMethod').value=['POST','PUT','PATCH','GET'].includes(o.method)?o.method:'POST';
+const sm=$('sample').value.replace(/[^\d]/g,'');let b=o.body;
+if(sm){const n=b.split(sm).length-1;b=b.split(sm).join('{{amount}}');var info=n?`${n} nominal diganti {{amount}}.`:'Nominal contoh tidak ditemukan di body, ganti manual dengan {{amount}}.'}
+$('bidBody').value=b;mergeHeaders(o.headers,o.cookie);save();
+const ok=b.includes('{{amount}}');say('mBid',(info||'')+(ok?' Terisi.':' Body belum memuat {{amount}}, ganti angka nominal secara manual.'),ok?'ok':'err')}catch(e){say('mBid',e.message,'err')}};
+
+$('bInspect').onclick=async()=>{say('mPaths','Mengambil respons...');try{const r=await api('/api/inspect',{config:gather()});renderPaths(r.paths);
+say('mPaths',r.paths.length?`${r.paths.length} field ditemukan. Tombol hijau = tebakan otomatis. Klik untuk mengisi.`:'Respons JSON tidak berisi field teks atau angka.',r.paths.length?'ok':'err')}catch(e){say('mPaths',e.message,'err')}};
+function renderPaths(ps){const box=$('paths');box.textContent='';
+for(const p of ps){const row=document.createElement('div');row.className='pr';
+const c=document.createElement('code');c.textContent=p.path;const v=document.createElement('span');v.className='v';v.textContent=String(p.value);row.append(c,v);
+for(const [t,id] of [['Harga','pricePath'],['Waktu tutup','endTimePath'],['Jam server','serverTimePath']]){
+const b=document.createElement('button');b.type='button';b.textContent=t;
+if((id==='pricePath'&&p.kind==='harga')||(id!=='pricePath'&&p.kind==='waktu'))b.className='sug';
+b.onclick=()=>{$(id).value=p.path;save();say('mPaths',id+' diisi: '+p.path,'ok')};row.append(b)}
+box.append(row)}}
+
+$('bTest').onclick=async()=>{say('mMain','Menguji...');say('mWarn','');try{const r=await api('/api/test',{config:gather()});
+endAt=Date.now()+r.remainingMs;$('price').textContent=rp(r.price);
+say('mMain',`Berhasil. Harga ${rp(r.price)}, tutup ${new Date(r.endTime).toLocaleString('id-ID')}, selisih jam ${r.offsetMs} ms, latensi ${r.rttMs} ms.`+(r.plannedAmount?`\nSimulasi bid saat ini: ${rp(r.plannedAmount)}.`:''),'ok');
+say('mWarn',r.warnings.map(w=>'- '+w).join('\n'),'warn')}catch(e){say('mMain',e.message,'err')}};
+
+$('bStart').onclick=async()=>{let c;try{c=gather()}catch(e){return say('mMain',e.message,'err')}
+if(!c.dryRun&&!confirm('MODE NYATA: bid akan benar-benar dikirim, maksimal '+c.maxBid+'. Lanjutkan?'))return;
+say('mMain','');try{await api('/api/start',{config:c})}catch(e){say('mMain',e.message,'err')}};
+$('bStop').onclick=()=>api('/api/stop').catch(()=>{});
+
+function chip(t,cls){$('chip').textContent=t;$('chip').className=cls||''}
+function setRun(r){running=r;$('bStart').disabled=r;$('bTest').disabled=r;$('bStop').disabled=!r;if(r)chip('Berjalan','run')}
+const es=new EventSource('/api/events');
+es.onmessage=ev=>{const m=JSON.parse(ev.data);
+if(m.type==='state'){setRun(m.running);if(!m.running&&$('chip').textContent==='Berjalan')chip('Siap')}
+else if(m.type==='log'){const l=$('log');l.textContent+=m.line.slice(11)+'\n';l.scrollTop=l.scrollHeight}
+else if(m.type==='event'){const e=m.event;
+if(e.type==='tick'){endAt=Date.now()+e.remainingMs;fireAt=Date.now()+e.fireInMs;$('price').textContent=rp(e.price)}
+else if(e.type==='armed'){fireAt=e.fireAt;chip('Siap tembak '+rp(e.amount),'run')}
+else if(e.type==='fired'){fireAt=null}}
+else if(m.type==='done'){const r=m.result;fireAt=null;
+const t={fired:r.dry?'Selesai (mode uji, tidak dikirim)':(r.ok?'Bid terkirim':'Bid ditolak server (HTTP '+r.httpStatus+')'),ended:'Lelang sudah berakhir',aborted:'Dibatalkan: '+r.reason,cancelled:'Dihentikan',error:'Error: '+r.message}[r.status];
+chip(t,r.status==='fired'&&(r.dry||r.ok)?'run':'bad')}};
+$('dryRun').onchange=()=>{if(!$('dryRun').checked)say('mMain','Mode nyata aktif: bid akan dikirim sungguhan.','err');else say('mMain','')};
+setInterval(()=>{$('tFire').textContent=fireAt?fmt(fireAt-Date.now()):'--:--.-';$('tEnd').textContent=endAt?fmt(endAt-Date.now()):'--:--.-'},100);
+document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{modeUI();save()});
+for(const k of F)$(k).addEventListener('change',save);
+load();modeUI();
+</script>
+</body>
+</html>
